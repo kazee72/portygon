@@ -48,7 +48,7 @@ async fn main() {
         let http_ports = http_ports_arc.clone();
 
         tasks.push(tokio::spawn(async move {
-            let _permit = semaphore.acquire().await.unwrap();
+            let _permit = semaphore.acquire().await.expect("semaphore closed");
             let scan_result = scanner::scan(ip, port, &http_ports).await;
             pb_clone.inc(1);
             (port, scan_result)
@@ -59,8 +59,10 @@ async fn main() {
 
     // collect results from all tasks
     for task in tasks {
-        let output = task.await;
-        results.push(output.unwrap());
+        match task.await {
+            Ok(result) => results.push(result),
+            Err(e) => eprintln!("Task failed: {}", e),
+        }
     }
 
     progress_bar.finish();
