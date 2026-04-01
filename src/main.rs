@@ -3,12 +3,15 @@ use portygon::{cli::Cli, ports, scanner, output};
 use indicatif::{self, ProgressBar, ProgressStyle};
 use tokio::sync::Semaphore;
 use std::sync::Arc;
+use std::collections::HashSet;
 
 
 
 #[tokio::main]
 async fn main() {
     let args = Cli::parse();
+
+    let http_ports: HashSet<u16> = HashSet::from([80, 443, 8080, 8443, 8000, 8888, 3000, 3001, 5000, 5173, 4200, 8081, 9090, 9443]);
     
     let parsed_ports: Vec<u16> = ports::parse_ports(&args.ports);
 
@@ -23,22 +26,24 @@ async fn main() {
     progress_bar.enable_steady_tick(std::time::Duration::from_millis(100));
 
     let semaphore = Arc::new(Semaphore::new(200));
+    let http_ports_arc = Arc::new(http_ports);
 
     for port in parsed_ports {
 
         let static_target_str = args.target.clone();
         let pb_clone = progress_bar.clone();
         let semaphore = semaphore.clone();
+        let http_ports = http_ports_arc.clone();
 
         tasks.push(tokio::spawn(async move {
             let _permit = semaphore.acquire().await.unwrap();
-            let scan_result = scanner::scan(&static_target_str, port).await;
+            let scan_result = scanner::scan(&static_target_str, port, &http_ports).await;
             pb_clone.inc(1);
             (port, scan_result)
         }));
     }
 
-    let mut results: Vec<(u16, bool)> = Vec::new();
+    let mut results: Vec<(u16, Option<String>)> = Vec::new();
 
     for task in tasks {
         let output = task.await;
