@@ -2,9 +2,11 @@ use clap::Parser;
 use portygon::{cli::Cli, ports, scanner, output};
 use indicatif::{self, ProgressBar, ProgressStyle};
 use tokio::sync::Semaphore;
+use tokio::time::timeout;
 use std::net::IpAddr;
 use std::sync::Arc;
 use std::collections::HashSet;
+use rand::random_range;
 
 
 
@@ -36,32 +38,43 @@ async fn main() {
 
     progress_bar.enable_steady_tick(std::time::Duration::from_millis(100));
 
-    // limit concurrent connections to avoid overwhelming the target
-    let semaphore = Arc::new(Semaphore::new(100));
-    let http_ports_arc = Arc::new(http_ports);
-
-    // spawn async tasks for each port
-    for port in parsed_ports {
-
-        let pb_clone = progress_bar.clone();
-        let semaphore = semaphore.clone();
-        let http_ports = http_ports_arc.clone();
-
-        tasks.push(tokio::spawn(async move {
-            let _permit = semaphore.acquire().await.expect("semaphore closed");
-            let scan_result = scanner::scan(ip, port, &http_ports).await;
-            pb_clone.inc(1);
-            (port, scan_result)
-        }));
-    }
-
     let mut results: Vec<(u16, Option<String>)> = Vec::new();
 
-    // collect results from all tasks
-    for task in tasks {
-        match task.await {
-            Ok(result) => results.push(result),
-            Err(e) => eprintln!("Task failed: {}", e),
+    if args.stealth {
+        for port in parsed_ports {
+            let scan_result = scanner::scan(ip, port, &http_ports).await;
+            results.push((port, scan_result));
+            progress_bar.inc(1);
+            
+            let delay = rand::random_range(2..=5);
+            tokio::time::sleep(std::time::Duration::from_secs(delay)).await;
+            
+        }
+    } else {
+        // limit concurrent connections to avoid overwhelming the target
+        let semaphore = Arc::new(Semaphore::new(100));
+        let http_ports_arc = Arc::new(http_ports);
+
+        // spawn async tasks for each port
+        for port in parsed_ports {
+
+            let pb_clone = progress_bar.clone();
+            let semaphore = semaphore.clone();
+            let http_ports = http_ports_arc.clone();
+
+            tasks.push(tokio::spawn(async move {
+                let _permit = semaphore.acquire().await.expect("semaphore closed");
+                let scan_result = scanner::scan(ip, port, &http_ports).await;
+                pb_clone.inc(1);
+                (port, scan_result)
+            }));
+        }
+        // collect results from all tasks
+        for task in tasks {
+            match task.await {
+                Ok(result) => results.push(result),
+                Err(e) => eprintln!("Task failed: {}", e),
+            }
         }
     }
 

@@ -8,4 +8,7 @@ pub struct Cli {
 
     #[arg(short, long, default_value = "1-1024", help = "Ports to scan")]
     pub ports: String,
+
+    #[arg(short, long, help = "Stealth mode: sequential scan with random delays (2-5s)")]
+    pub stealth: bool,
 }
