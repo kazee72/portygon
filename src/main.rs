@@ -19,7 +19,7 @@ async fn main() {
     let mut tasks = Vec::with_capacity(parsed_ports.len());
 
     let progress_bar = ProgressBar::new(parsed_ports.len() as u64);
-    progress_bar.set_style(ProgressStyle::with_template("[{spinner}] Scanning... {percent}%")
+    progress_bar.set_style(ProgressStyle::with_template("[{spinner}] Scanning... {pos}/{len} ports {percent}%")
         .unwrap()
         .tick_chars("||//--\\\\")
     );
@@ -27,7 +27,7 @@ async fn main() {
     progress_bar.enable_steady_tick(std::time::Duration::from_millis(100));
 
     // limit concurrent connections to avoid overwhelming the target
-    let semaphore = Arc::new(Semaphore::new(200));
+    let semaphore = Arc::new(Semaphore::new(100));
     let http_ports_arc = Arc::new(http_ports);
 
     // spawn async tasks for each port
