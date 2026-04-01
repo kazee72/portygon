@@ -11,6 +11,7 @@ use std::collections::HashSet;
 async fn main() {
     let args = Cli::parse();
 
+    // ports that require an HTTP request for banner grabbing
     let http_ports: HashSet<u16> = HashSet::from([80, 443, 8080, 8443, 8000, 8888, 3000, 3001, 5000, 5173, 4200, 8081, 9090, 9443]);
     
     let parsed_ports: Vec<u16> = ports::parse_ports(&args.ports);
@@ -25,9 +26,11 @@ async fn main() {
 
     progress_bar.enable_steady_tick(std::time::Duration::from_millis(100));
 
+    // limit concurrent connections to avoid overwhelming the target
     let semaphore = Arc::new(Semaphore::new(200));
     let http_ports_arc = Arc::new(http_ports);
 
+    // spawn async tasks for each port
     for port in parsed_ports {
 
         let static_target_str = args.target.clone();
@@ -45,6 +48,7 @@ async fn main() {
 
     let mut results: Vec<(u16, Option<String>)> = Vec::new();
 
+    // collect results from all tasks
     for task in tasks {
         let output = task.await;
         results.push(output.unwrap());
