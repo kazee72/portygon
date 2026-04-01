@@ -7,15 +7,14 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 /// Scans a single port on the target host and attempts to grab the service banner.
 ///
 /// # Arguments
-/// * `ip_str` - Target IP address as a string
+/// * `ip` - Target IP address as an IpAddr
 /// * `port` - Port number to scan
 /// * `http_ports` - Set of ports that require an HTTP request for banner grabbing
 ///
 /// # Returns
 /// * `Some(banner)` - Port is open, with banner string (may be empty if no banner received)
 /// * `None` - Port is closed or filtered
-pub async fn scan(ip_str: &str, port: u16, http_ports: &HashSet<u16>) -> Option<String> {
-    let ip: IpAddr = ip_str.parse().unwrap();
+pub async fn scan(ip: IpAddr, port: u16, http_ports: &HashSet<u16>) -> Option<String> {
     let socket = SocketAddr::new(ip, port);
 
     // Attempt TCP connection with timeout
@@ -24,7 +23,7 @@ pub async fn scan(ip_str: &str, port: u16, http_ports: &HashSet<u16>) -> Option<
             let mut buf = vec![0u8; 1024];
             // Send HTTP request if port is a known HTTP port
             if http_ports.contains(&port) {
-                let request = format!("GET / HTTP/1.1\r\nHost: {}\r\n\r\n", ip_str);
+                let request = format!("GET / HTTP/1.1\r\nHost: {}\r\n\r\n", ip);
                 stream.write_all(request.as_bytes()).await.ok();
             }
 
