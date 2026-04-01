@@ -18,9 +18,11 @@ pub async fn scan(ip_str: &str, port: u16, http_ports: &HashSet<u16>) -> Option<
     let ip: IpAddr = ip_str.parse().unwrap();
     let socket = SocketAddr::new(ip, port);
 
+    // Attempt TCP connection with timeout
     match timeout(Duration::from_secs(3), TcpStream::connect(socket)).await {
         Ok(Ok(mut stream)) => {
             let mut buf = vec![0u8; 1024];
+            // Send HTTP request if port is a known HTTP port
             if http_ports.contains(&port) {
                 let request = format!("GET / HTTP/1.1\r\nHost: {}\r\n\r\n", ip_str);
                 stream.write_all(request.as_bytes()).await.ok();
@@ -28,6 +30,7 @@ pub async fn scan(ip_str: &str, port: u16, http_ports: &HashSet<u16>) -> Option<
 
             if let Ok(Ok(bytes_read)) = timeout(Duration::from_secs(2), stream.read(&mut buf)).await {
                 let banner = String::from_utf8_lossy(&buf[..bytes_read]).to_string();
+                // Extract status line and Server header from HTTP response
                 if banner.starts_with("HTTP") {
                     let mut http_banner = String::new();
                     let split_banner: Vec<&str> = banner.split("\r\n").collect();
@@ -39,13 +42,16 @@ pub async fn scan(ip_str: &str, port: u16, http_ports: &HashSet<u16>) -> Option<
                         }
                     }
                     Some(http_banner)
+                
                 } else {
                     Some(banner)
                 }
+            // Port is open but no banner received
             } else {
                 Some(String::new())
             }    
         }
+        // Connection failed or timed out
         _ => {
             None
         }
