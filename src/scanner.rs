@@ -32,17 +32,7 @@ pub async fn scan(ip_str: &str, port: u16, http_ports: &HashSet<u16>) -> Option<
                 let banner = String::from_utf8_lossy(&buf[..bytes_read]).to_string();
                 // Extract status line and Server header from HTTP response
                 if banner.starts_with("HTTP") {
-                    let mut http_banner = String::new();
-                    let split_banner: Vec<&str> = banner.split("\r\n").collect();
-                    http_banner += split_banner[0];
-                    for line in split_banner {
-                        if line.starts_with("Server") {
-                            http_banner += " | ";
-                            http_banner += line;
-                        }
-                    }
-                    Some(http_banner)
-                
+                    Some(parse_banner(&banner))
                 } else {
                     Some(banner)
                 }
@@ -55,5 +45,89 @@ pub async fn scan(ip_str: &str, port: u16, http_ports: &HashSet<u16>) -> Option<
         _ => {
             None
         }
+    }
+}
+
+
+
+/// Extracts the status line and Server header from a raw HTTP response.
+///
+/// # Arguments
+/// * `raw_banner` - Raw HTTP response string
+///
+/// # Returns
+/// A formatted string with the status line and Server header separated by " | "
+pub fn parse_banner(raw_banner: &str) -> String {
+    let mut http_banner = String::new();
+    let split_banner: Vec<&str> = raw_banner.split("\r\n").collect();
+    http_banner += split_banner[0];
+
+    for line in split_banner {
+        if line.starts_with("Server:") {
+            http_banner += " | ";
+            http_banner += line;
+        }
+    }
+    http_banner
+}
+
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_full_http_response() {
+        let raw = "HTTP/1.1 200 OK\r\nDate: Wed, 01 Apr 2026\r\nServer: Apache/2.4.7 (Ubuntu)\r\nContent-Type: text/html\r\n\r\n<html>...</html>";
+        let expected = "HTTP/1.1 200 OK | Server: Apache/2.4.7 (Ubuntu)";
+        let output = parse_banner(raw);
+
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn test_response_without_server_header() {
+        let raw = "HTTP/1.1 200 OK\r\nDate: Wed, 01 Apr 2026\r\nContent-Type: text/html\r\n\r\n<html>...</html>";
+        let expected = "HTTP/1.1 200 OK";
+        let output = parse_banner(raw);
+
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn test_status_line_only() {
+        let raw = "HTTP/1.1 200 OK";
+        let expected = "HTTP/1.1 200 OK";
+        let output = parse_banner(raw);
+
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn test_empty_string() {
+        let raw = "";
+        let expected = "";
+        let output = parse_banner(raw);
+
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn test_server_with_unusual_value() {
+        let raw = "HTTP/1.1 200 OK\r\nServer: nginx/1.18.0 (Ubuntu)\r\nContent-Type: text/html\r\n\r\n";
+        let expected = "HTTP/1.1 200 OK | Server: nginx/1.18.0 (Ubuntu)";
+        let output = parse_banner(raw);
+
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn test_servername_should_not_match() {
+        let raw = "HTTP/1.1 200 OK\r\nServerName: myhost.local\r\nServer: Apache/2.4.7\r\n\r\n";
+        let expected = "HTTP/1.1 200 OK | Server: Apache/2.4.7";
+        let output = parse_banner(raw);
+
+        assert_eq!(expected, output);
     }
 }
