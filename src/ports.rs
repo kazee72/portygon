@@ -1,3 +1,13 @@
+/// Parses a port specification string into a list of port numbers.
+///
+/// Supports single ports, comma-separated lists, and ranges.
+/// Invalid entries are silently skipped.
+///
+/// # Arguments
+/// * `port_string` - Port specification (e.g. "80", "80,443", "1-1024", "80,443,8000-8080")
+///
+/// # Returns
+/// A `Vec<u16>` of parsed port numbers
 pub fn parse_ports(port_string: &str) -> Vec<u16> {
 
     let mut ports: Vec<u16> = Vec::new();

@@ -4,7 +4,16 @@ use tokio::net::TcpStream;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 
-
+/// Scans a single port on the target host and attempts to grab the service banner.
+///
+/// # Arguments
+/// * `ip_str` - Target IP address as a string
+/// * `port` - Port number to scan
+/// * `http_ports` - Set of ports that require an HTTP request for banner grabbing
+///
+/// # Returns
+/// * `Some(banner)` - Port is open, with banner string (may be empty if no banner received)
+/// * `None` - Port is closed or filtered
 pub async fn scan(ip_str: &str, port: u16, http_ports: &HashSet<u16>) -> Option<String> {
     let ip: IpAddr = ip_str.parse().unwrap();
     let socket = SocketAddr::new(ip, port);

@@ -2,6 +2,13 @@ use colored::Colorize;
 
 
 
+/// Displays the scan results in the terminal with color-coded output.
+///
+/// Open ports are shown in green with their banner if available.
+/// Prints a message if no open ports were found.
+///
+/// # Arguments
+/// * `input` - Slice of (port, banner) tuples where `Some` indicates an open port
 pub fn display_results(input: &[(u16, Option<String>)]) {
     let mut open_ports: Vec<(u16, String)> = Vec::new();
 
