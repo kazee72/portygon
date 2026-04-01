@@ -2,12 +2,12 @@ use colored::Colorize;
 
 
 
-pub fn display_results(input: &[(u16, bool)]) {
-    let mut open_ports: Vec<u16> = Vec::new();
+pub fn display_results(input: &[(u16, Option<String>)]) {
+    let mut open_ports: Vec<(u16, String)> = Vec::new();
 
     for port in input {
-        if port.1 {
-            open_ports.push(port.0);
+        if let Some(banner) = &port.1 {
+            open_ports.push((port.0, banner.trim().to_string()));
         }
     }
 
@@ -17,7 +17,7 @@ pub fn display_results(input: &[(u16, bool)]) {
         println!("{}", "No open ports found.".red());
     } else {
         for port in open_ports {
-            println!("{}", port.to_string().green());
+            println!("{}: {}", port.0.to_string().green(), if port.1.is_empty() { "No banner".truecolor(92, 170, 180) } else { port.1.truecolor(92, 170, 180)});
         }
     }
 
