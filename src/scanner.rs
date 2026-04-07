@@ -9,7 +9,6 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 /// # Arguments
 /// * `ip` - Target IP address as an IpAddr
 /// * `port` - Port number to scan
-/// * `http_ports` - Set of ports that require an HTTP request for banner grabbing
 ///
 /// # Returns
 /// * `Some(banner)` - Port is open, with banner string (may be empty if no banner received)

@@ -71,6 +71,8 @@ async fn main() {
 
     progress_bar.finish();
 
+    results.sort_by_key(|(port, _)| *port);
+
     if args.json {
         output::output_json(&results, &args.target, total_ports);
     } else {

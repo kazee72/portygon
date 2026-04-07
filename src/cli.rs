@@ -1,7 +1,7 @@
 use clap::Parser;
 
 #[derive(Parser)]
-#[command(name= "portygon", about = "Port scanner")]
+#[command(name = "portygon", about = "Port scanner", version = "0.1.0")]
 pub struct Cli {
     #[arg(help = "Target ip")]
     pub target: String,
@@ -14,4 +14,5 @@ pub struct Cli {
 
     #[arg(short, long, help = "Output results as JSON")]
     pub json: bool,
+
 }
