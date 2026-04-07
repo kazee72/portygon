@@ -1,4 +1,4 @@
-use std::{collections::HashSet, net::{IpAddr, SocketAddr}, time::Duration};
+use std::{net::{IpAddr, SocketAddr}, time::Duration};
 use tokio::time::timeout;
 use tokio::net::TcpStream;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -14,15 +14,18 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 /// # Returns
 /// * `Some(banner)` - Port is open, with banner string (may be empty if no banner received)
 /// * `None` - Port is closed or filtered
-pub async fn scan(ip: IpAddr, port: u16, http_ports: &HashSet<u16>) -> Option<String> {
+pub async fn scan(ip: IpAddr, port: u16) -> Option<String> {
     let socket = SocketAddr::new(ip, port);
+
+    // ports that require an HTTP request for banner grabbing
+    const HTTP_PORTS: [u16; 14] = [80, 443, 8080, 8443, 8000, 8888, 3000, 3001, 5000, 5173, 4200, 8081, 9090, 9443];
 
     // Attempt TCP connection with timeout
     match timeout(Duration::from_secs(3), TcpStream::connect(socket)).await {
         Ok(Ok(mut stream)) => {
             let mut buf = vec![0u8; 1024];
             // Send HTTP request if port is a known HTTP port
-            if http_ports.contains(&port) {
+            if HTTP_PORTS.contains(&port) {
                 let request = format!("GET / HTTP/1.1\r\nHost: {}\r\n\r\n", ip);
                 stream.write_all(request.as_bytes()).await.ok();
             }
