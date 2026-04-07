@@ -25,6 +25,7 @@ async fn main() {
     let http_ports: HashSet<u16> = HashSet::from([80, 443, 8080, 8443, 8000, 8888, 3000, 3001, 5000, 5173, 4200, 8081, 9090, 9443]);
     
     let parsed_ports: Vec<u16> = ports::parse_ports(&args.ports);
+    let total_ports = parsed_ports.len();
 
     let mut tasks = Vec::with_capacity(parsed_ports.len());
 
@@ -78,5 +79,11 @@ async fn main() {
 
     progress_bar.finish();
 
-    output::display_results(&results);
+    if args.json {
+        output::output_json(&results, &args.target, total_ports);
+    } else {
+        output::display_results(&results);
+    }
+
+    
 }
