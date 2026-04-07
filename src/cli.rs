@@ -11,4 +11,7 @@ pub struct Cli {
 
     #[arg(short, long, help = "Stealth mode: sequential scan with random delays (2-5s)")]
     pub stealth: bool,
+
+    #[arg(short, long, help = "Output results as JSON")]
+    pub json: bool,
 }

@@ -2,11 +2,9 @@ use clap::Parser;
 use portygon::{cli::Cli, ports, scanner, output};
 use indicatif::{self, ProgressBar, ProgressStyle};
 use tokio::sync::Semaphore;
-use tokio::time::timeout;
 use std::net::IpAddr;
 use std::sync::Arc;
 use std::collections::HashSet;
-use rand::random_range;
 
 
 

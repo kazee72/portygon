@@ -1,4 +1,20 @@
 use colored::Colorize;
+use serde::Serialize;
+
+
+
+#[derive(Serialize)]
+struct ScanResult {
+    target: String,
+    ports_scanned: usize,
+    open_ports: Vec<OpenPort>
+}
+
+#[derive(Serialize)]
+struct OpenPort {
+    port: u16,
+    banner: String
+}
 
 
 
@@ -8,12 +24,12 @@ use colored::Colorize;
 /// Prints a message if no open ports were found.
 ///
 /// # Arguments
-/// * `input` - Slice of (port, banner) tuples where `Some` indicates an open port
-pub fn display_results(input: &[(u16, Option<String>)]) {
+/// * `result` - Slice of (port, banner) tuples where `Some` indicates an open port
+pub fn display_results(result: &[(u16, Option<String>)]) {
     let mut open_ports: Vec<(u16, String)> = Vec::new();
 
     // Filter for open ports and extract banners
-    for port in input {
+    for port in result {
         if let Some(banner) = &port.1 {
             open_ports.push((port.0, banner.trim().to_string()));
         }
@@ -30,4 +46,31 @@ pub fn display_results(input: &[(u16, Option<String>)]) {
         }
     }
 
+}
+
+
+
+/// Outputs scan results as formatted JSON to stdout.
+///
+/// # Arguments
+/// * `result` - Slice of (port, banner) tuples where `Some` indicates an open port
+/// * `target` - Target IP address string
+/// * `ports_scanned` - Total number of ports scanned
+pub fn output_json(result: &[(u16, Option<String>)], target: &str, ports_scanned: usize) {
+    // filter for open ports and convert to OpenPort structs
+    let open_ports: Vec<OpenPort> = result.iter().filter_map(|(port, banner)| {
+        banner.as_ref().map(|b| OpenPort {
+            port: *port,
+            banner: b.trim().to_string(),
+        })
+    }).collect();
+
+    let scan_result = ScanResult {
+        target: target.to_string(),
+        ports_scanned,
+        open_ports,
+    };
+
+    let json = serde_json::to_string_pretty(&scan_result).unwrap();
+    println!("{}", json);
 }
