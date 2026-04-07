@@ -22,6 +22,11 @@ async fn main() {
     let parsed_ports: Vec<u16> = ports::parse_ports(&args.ports);
     let total_ports = parsed_ports.len();
 
+    if parsed_ports.is_empty() {
+        eprintln!("Error: No valid ports specified");
+        std::process::exit(1);
+    }
+
     let progress_bar = ProgressBar::new(parsed_ports.len() as u64);
     progress_bar.set_style(ProgressStyle::with_template("[{spinner}] Scanning... {pos}/{len} ports {percent}%")
         .unwrap()
