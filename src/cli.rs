@@ -1,7 +1,7 @@
 use clap::Parser;
 
 #[derive(Parser)]
-#[command(name = "portygon", about = "Port scanner", version = "0.1.0")]
+#[command(name = "portygon", about = "Port scanner", version)]
 pub struct Cli {
     #[arg(help = "Target ip")]
     pub target: String,
