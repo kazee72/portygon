@@ -60,10 +60,13 @@ pub async fn scan(ip: IpAddr, port: u16) -> Option<String> {
 /// A formatted string with the status line and Server header separated by " | "
 pub fn parse_banner(raw_banner: &str) -> String {
     let mut http_banner = String::new();
-    let split_banner: Vec<&str> = raw_banner.split("\r\n").collect();
-    http_banner += split_banner[0];
+    let mut lines = raw_banner.split("\r\n");
 
-    for line in split_banner {
+    if let Some(status_line) = lines.next() {
+        http_banner += status_line;
+    }
+    
+    for line in lines {
         if line.starts_with("Server:") {
             http_banner += " | ";
             http_banner += line;
