@@ -26,13 +26,8 @@ struct OpenPort {
 /// # Arguments
 /// * `result` - Slice of (port, banner) tuples where `Some` indicates an open port
 pub fn display_results(result: &[(u16, Option<String>)]) {
-    // filter for open ports and convert to OpenPort structs
-    let open_ports: Vec<OpenPort> = result.iter().filter_map(|(port, banner)| {
-        banner.as_ref().map(|b| OpenPort {
-            port: *port,
-            banner: b.trim().to_string(),
-        })
-    }).collect();
+
+    let open_ports: Vec<OpenPort> = filter_open_ports(result);
 
     println!("{}{}{}", "[".truecolor(223, 93, 108), "Open Ports".truecolor(92, 170, 180), "]".truecolor(223, 93, 108));
 
@@ -56,13 +51,8 @@ pub fn display_results(result: &[(u16, Option<String>)]) {
 /// * `target` - Target IP address string
 /// * `ports_scanned` - Total number of ports scanned
 pub fn output_json(result: &[(u16, Option<String>)], target: &str, ports_scanned: usize) {
-    // filter for open ports and convert to OpenPort structs
-    let open_ports: Vec<OpenPort> = result.iter().filter_map(|(port, banner)| {
-        banner.as_ref().map(|b| OpenPort {
-            port: *port,
-            banner: b.trim().to_string(),
-        })
-    }).collect();
+
+    let open_ports: Vec<OpenPort> = filter_open_ports(result);
 
     let scan_result = ScanResult {
         target: target.to_string(),
@@ -70,6 +60,30 @@ pub fn output_json(result: &[(u16, Option<String>)], target: &str, ports_scanned
         open_ports,
     };
 
-    let json = serde_json::to_string_pretty(&scan_result).unwrap();
-    println!("{}", json);
+    match serde_json::to_string_pretty(&scan_result) {
+        Ok(json) => println!("{}", json),
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            std::process::exit(1);
+        }
+    }
+    
+}
+
+
+
+/// Filters scan results for open ports and converts them to OpenPort structs.
+///
+/// # Arguments
+/// * `input` - Slice of (port, banner) tuples where `Some` indicates an open port
+///
+/// # Returns
+/// A `Vec<OpenPort>` containing only the open ports with trimmed banners
+fn filter_open_ports(input: &[(u16, Option<String>)]) -> Vec<OpenPort> {
+    input.iter().filter_map(|(port, banner)| {
+        banner.as_ref().map(|b| OpenPort {
+            port: *port,
+            banner: b.trim().to_string(),
+        })
+    }).collect()
 }
