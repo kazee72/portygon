@@ -15,22 +15,21 @@ pub fn parse_ports(port_string: &str) -> Vec<u16> {
     // Remove all whitespace from input
     let port_string_clean: String = port_string.chars().filter(|c| !c.is_whitespace()).collect();
 
-    let separated: Vec<&str> = port_string_clean.split(',').collect();
+    let separated = port_string_clean.split(',');
 
     for port in separated {
-        let port_range: Vec<&str> = port.split('-').collect();
-        // Handle port ranges (e.g. "80-443")
-        if port_range.len() > 1 {
-            if let Ok(port1) = port_range[0].parse::<u16>() {
-                if let Ok(port2) = port_range[1].parse::<u16>() {
-                    for i in port1..=port2 {
+        let mut port_range = port.split('-');
+
+        if let Some(port_1) = port_range.next() {
+            if let Some(port_2) = port_range.next() {
+                if  let Ok(start) = port_1.parse::<u16>() && let Ok(end) = port_2.parse::<u16>() {
+                    for i in start..=end {
                         ports.push(i);
                     }
                 }
+            } else if let Ok(port) = port_1.parse::<u16>() {
+                ports.push(port);
             }
-        // Handle single ports
-        } else if let Ok(port) = port.parse::<u16>() {
-            ports.push(port);
         }
     }
 
