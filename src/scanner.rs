@@ -58,7 +58,7 @@ pub async fn scan(ip: IpAddr, port: u16) -> Option<String> {
 ///
 /// # Returns
 /// A formatted string with the status line and Server header separated by " | "
-pub fn parse_banner(raw_banner: &str) -> String {
+fn parse_banner(raw_banner: &str) -> String {
     let mut http_banner = String::new();
     let mut lines = raw_banner.split("\r\n");
 
