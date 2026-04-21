@@ -1,8 +1,10 @@
-use std::{net::{IpAddr, SocketAddr}, time::Duration};
-use tokio::time::timeout;
-use tokio::net::TcpStream;
+use std::{
+    net::{IpAddr, SocketAddr},
+    time::Duration,
+};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-
+use tokio::net::TcpStream;
+use tokio::time::timeout;
 
 /// Scans a single port on the target host and attempts to grab the service banner.
 ///
@@ -17,7 +19,9 @@ pub async fn scan(ip: IpAddr, port: u16) -> Option<String> {
     let socket = SocketAddr::new(ip, port);
 
     // ports that require an HTTP request for banner grabbing
-    const HTTP_PORTS: [u16; 14] = [80, 443, 8080, 8443, 8000, 8888, 3000, 3001, 5000, 5173, 4200, 8081, 9090, 9443];
+    const HTTP_PORTS: [u16; 14] = [
+        80, 443, 8080, 8443, 8000, 8888, 3000, 3001, 5000, 5173, 4200, 8081, 9090, 9443,
+    ];
 
     // Attempt TCP connection with timeout
     match timeout(Duration::from_secs(3), TcpStream::connect(socket)).await {
@@ -29,7 +33,8 @@ pub async fn scan(ip: IpAddr, port: u16) -> Option<String> {
                 stream.write_all(request.as_bytes()).await.ok();
             }
 
-            if let Ok(Ok(bytes_read)) = timeout(Duration::from_secs(2), stream.read(&mut buf)).await {
+            if let Ok(Ok(bytes_read)) = timeout(Duration::from_secs(2), stream.read(&mut buf)).await
+            {
                 let banner = String::from_utf8_lossy(&buf[..bytes_read]).to_string();
                 // Extract status line and Server header from HTTP response
                 if banner.starts_with("HTTP") {
@@ -40,16 +45,12 @@ pub async fn scan(ip: IpAddr, port: u16) -> Option<String> {
             // Port is open but no banner received
             } else {
                 Some(String::new())
-            }    
+            }
         }
         // Connection failed or timed out
-        _ => {
-            None
-        }
+        _ => None,
     }
 }
-
-
 
 /// Extracts the status line and Server header from a raw HTTP response.
 ///
@@ -65,7 +66,7 @@ fn parse_banner(raw_banner: &str) -> String {
     if let Some(status_line) = lines.next() {
         http_banner += status_line;
     }
-    
+
     for line in lines {
         if line.starts_with("Server:") {
             http_banner += " | ";
@@ -74,8 +75,6 @@ fn parse_banner(raw_banner: &str) -> String {
     }
     http_banner
 }
-
-
 
 #[cfg(test)]
 mod tests {
@@ -119,7 +118,8 @@ mod tests {
 
     #[test]
     fn test_server_with_unusual_value() {
-        let raw = "HTTP/1.1 200 OK\r\nServer: nginx/1.18.0 (Ubuntu)\r\nContent-Type: text/html\r\n\r\n";
+        let raw =
+            "HTTP/1.1 200 OK\r\nServer: nginx/1.18.0 (Ubuntu)\r\nContent-Type: text/html\r\n\r\n";
         let expected = "HTTP/1.1 200 OK | Server: nginx/1.18.0 (Ubuntu)";
         let output = parse_banner(raw);
 

@@ -9,7 +9,6 @@
 /// # Returns
 /// A `Vec<u16>` of parsed port numbers
 pub fn parse_ports(port_string: &str) -> Vec<u16> {
-
     let mut ports: Vec<u16> = Vec::new();
 
     // Remove all whitespace from input
@@ -22,7 +21,9 @@ pub fn parse_ports(port_string: &str) -> Vec<u16> {
 
         if let Some(port_1) = port_range.next() {
             if let Some(port_2) = port_range.next() {
-                if let Ok(start) = port_1.parse::<u16>() && let Ok(end) = port_2.parse::<u16>() {
+                if let Ok(start) = port_1.parse::<u16>()
+                    && let Ok(end) = port_2.parse::<u16>()
+                {
                     for i in start..=end {
                         ports.push(i);
                     }
@@ -34,10 +35,7 @@ pub fn parse_ports(port_string: &str) -> Vec<u16> {
     }
 
     ports
-
 }
-
-
 
 #[cfg(test)]
 mod tests {

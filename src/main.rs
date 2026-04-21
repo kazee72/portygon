@@ -1,12 +1,9 @@
 use clap::Parser;
-use portygon::target;
-use portygon::{cli::Cli, ports, scanner, output};
 use indicatif::{ProgressBar, ProgressStyle};
-use tokio::sync::Semaphore;
+use portygon::{cli::Cli, output, ports, scanner, target};
 use std::net::IpAddr;
 use std::sync::Arc;
-
-
+use tokio::sync::Semaphore;
 
 #[tokio::main]
 async fn main() {
@@ -19,9 +16,9 @@ async fn main() {
             std::process::exit(1);
         }
     };
-    
+
     let parsed_ports: Vec<u16> = ports::parse_ports(&args.ports);
-    
+
     if parsed_ports.is_empty() {
         eprintln!("Error: No valid ports specified");
         std::process::exit(1);
@@ -30,9 +27,10 @@ async fn main() {
     let total_ports = parsed_ports.len();
 
     let progress_bar = ProgressBar::new(parsed_ports.len() as u64);
-    progress_bar.set_style(ProgressStyle::with_template("[{spinner}] Scanning... {pos}/{len} ports {percent}%")
-        .unwrap()
-        .tick_chars("||//--\\\\")
+    progress_bar.set_style(
+        ProgressStyle::with_template("[{spinner}] Scanning... {pos}/{len} ports {percent}%")
+            .unwrap()
+            .tick_chars("||//--\\\\"),
     );
 
     progress_bar.enable_steady_tick(std::time::Duration::from_millis(100));
@@ -44,10 +42,9 @@ async fn main() {
             let scan_result = scanner::scan(ip, port).await;
             results.push((port, scan_result));
             progress_bar.inc(1);
-            
+
             let delay = rand::random_range(2..=5);
             tokio::time::sleep(std::time::Duration::from_secs(delay)).await;
-            
         }
     } else {
         let mut tasks = Vec::with_capacity(parsed_ports.len());
@@ -56,7 +53,6 @@ async fn main() {
 
         // spawn async tasks for each port
         for port in parsed_ports {
-
             let pb_clone = progress_bar.clone();
             let semaphore = semaphore.clone();
 
@@ -85,6 +81,4 @@ async fn main() {
     } else {
         output::display_results(&results);
     }
-
-    
 }

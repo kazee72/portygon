@@ -1,7 +1,5 @@
 use std::net::IpAddr;
 
-
-
 /// Resolves a target string into an IP address.
 ///
 /// Accepts either a raw IP address or a hostname. Raw IPs are returned
@@ -14,8 +12,7 @@ use std::net::IpAddr;
 /// # Returns
 /// * `Ok(IpAddr)` - The resolved IP address
 /// * `Err(String)` - Error message if the target cannot be resolved
-pub async fn resolve_target(target_string: &str) -> Result<IpAddr, String>{
-
+pub async fn resolve_target(target_string: &str) -> Result<IpAddr, String> {
     if let Ok(ip) = target_string.parse::<IpAddr>() {
         return Ok(ip);
     }
@@ -26,7 +23,9 @@ pub async fn resolve_target(target_string: &str) -> Result<IpAddr, String>{
         Err(e) => return Err(format!("could not resolve '{}': {}", target_string, e)),
     };
 
-    let socket_addr = addrs.next().ok_or_else(|| format!("no addresses found for '{}'", target_string))?;
+    let socket_addr = addrs
+        .next()
+        .ok_or_else(|| format!("no addresses found for '{}'", target_string))?;
 
     Ok(socket_addr.ip())
 }
