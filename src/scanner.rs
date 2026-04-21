@@ -10,12 +10,13 @@ use tokio::time::timeout;
 ///
 /// # Arguments
 /// * `ip` - Target IP address as an IpAddr
+/// * `host` - Hostname string to use in HTTP Host header
 /// * `port` - Port number to scan
 ///
 /// # Returns
 /// * `Some(banner)` - Port is open, with banner string (may be empty if no banner received)
 /// * `None` - Port is closed or filtered
-pub async fn scan(ip: IpAddr, port: u16) -> Option<String> {
+pub async fn scan(ip: IpAddr, host: &str, port: u16) -> Option<String> {
     let socket = SocketAddr::new(ip, port);
 
     // ports that require an HTTP request for banner grabbing
@@ -29,7 +30,7 @@ pub async fn scan(ip: IpAddr, port: u16) -> Option<String> {
             let mut buf = vec![0u8; 1024];
             // Send HTTP request if port is a known HTTP port
             if HTTP_PORTS.contains(&port) {
-                let request = format!("GET / HTTP/1.1\r\nHost: {}\r\n\r\n", ip);
+                let request = format!("GET / HTTP/1.1\r\nHost: {}\r\n\r\n", host);
                 stream.write_all(request.as_bytes()).await.ok();
             }
 

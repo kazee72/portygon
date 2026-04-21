@@ -39,7 +39,7 @@ async fn main() {
 
     if args.stealth {
         for port in parsed_ports {
-            let scan_result = scanner::scan(ip, port).await;
+            let scan_result = scanner::scan(ip, &args.target, port).await;
             results.push((port, scan_result));
             progress_bar.inc(1);
 
@@ -55,10 +55,11 @@ async fn main() {
         for port in parsed_ports {
             let pb_clone = progress_bar.clone();
             let semaphore = semaphore.clone();
+            let target = args.target.clone();
 
             tasks.push(tokio::spawn(async move {
                 let _permit = semaphore.acquire().await.expect("semaphore closed");
-                let scan_result = scanner::scan(ip, port).await;
+                let scan_result = scanner::scan(ip, &target, port).await;
                 pb_clone.inc(1);
                 (port, scan_result)
             }));
