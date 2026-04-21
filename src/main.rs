@@ -1,4 +1,5 @@
 use clap::Parser;
+use portygon::target;
 use portygon::{cli::Cli, ports, scanner, output};
 use indicatif::{ProgressBar, ProgressStyle};
 use tokio::sync::Semaphore;
@@ -11,10 +12,10 @@ use std::sync::Arc;
 async fn main() {
     let args = Cli::parse();
 
-    let ip: IpAddr = match args.target.parse() {
+    let ip: IpAddr = match target::resolve_target(&args.target).await {
         Ok(addr) => addr,
-        Err(_) => {
-            eprintln!("Error: '{}' is not a valid IP address", args.target);
+        Err(e) => {
+            eprintln!("Error: {}", e);
             std::process::exit(1);
         }
     };
