@@ -1,4 +1,4 @@
-use std::net::IpAddr;
+use std::net::{IpAddr, SocketAddr};
 
 /// Resolves a target string into an IP address.
 ///
@@ -18,14 +18,19 @@ pub async fn resolve_target(target_string: &str) -> Result<IpAddr, String> {
     }
 
     let query = format!("{}:0", target_string);
-    let mut addrs = match tokio::net::lookup_host(query).await {
+    let addrs: Vec<SocketAddr> = match tokio::net::lookup_host(query).await {
         Ok(addrs) => addrs,
         Err(e) => return Err(format!("could not resolve '{}': {}", target_string, e)),
-    };
+    }.collect();
 
-    let socket_addr = addrs
-        .next()
-        .ok_or_else(|| format!("no addresses found for '{}'", target_string))?;
+    if addrs.is_empty() {
+        return Err(format!("could not resolve '{}'", target_string));
+    }
 
-    Ok(socket_addr.ip())
+    let ip = addrs.iter()
+    .find(|a| a.ip().is_ipv4())
+    .map(|a| a.ip())
+    .unwrap_or_else(|| addrs[0].ip());
+
+    Ok(ip)
 }
